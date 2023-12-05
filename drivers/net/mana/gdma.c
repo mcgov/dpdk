@@ -43,7 +43,7 @@ write_dma_client_oob(uint8_t *work_queue_buffer_pointer,
 		header->client_oob_in_sgl = 1;
 		if (work_request->flags & GDMA_WR_FLAG_OOB_IN_SGL)
 			header->last_v_bytes = work_request->sgl[0].size;
-		DP_LOG(DEBUG, "queue buf %p sgl %u last_v_bytes %u",
+		DP_LOG(ERR, "queue buf %p sgl %u last_v_bytes %u",
 		       work_queue_buffer_pointer, header->num_sgl_entries,
 		       header->last_v_bytes);
 	}
