@@ -319,6 +319,7 @@ EXPERIMENTAL {
 
 	# added in 24.03
 	rte_eth_find_rss_algo;
+	rte_eth_tx_queue_count;
 };
 
 INTERNAL {

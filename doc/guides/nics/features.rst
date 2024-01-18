@@ -697,6 +697,16 @@ or "Unavailable."
 * **[related]    API**: ``rte_eth_tx_descriptor_status()``.
 
 
+.. _nic_features_tx_queue_count:
+
+Tx queue count
+--------------
+
+Supports to get the number of used descriptors of a Tx queue.
+
+* **[implements] eth_dev_ops**: ``tx_queue_count``.
+* **[related] API**: ``rte_eth_tx_queue_count()``.
+
 .. _nic_features_basic_stats:
 
 Basic stats

@@ -65,6 +65,11 @@ New Features
   * Added ``RTE_FLOW_ITEM_TYPE_RANDOM`` to match random value.
   * Added ``RTE_FLOW_FIELD_RANDOM`` to represent it in field ID struct.
 
+* ** Support for getting the number of used descriptors of a Tx queue. **
+
+  * Added a fath path function ``rte_eth_tx_queue_count`` to get the number of used
+    descriptors of a Tx queue.
+
 
 Removed Items
 -------------
