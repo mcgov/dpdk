@@ -17,7 +17,6 @@
 #include <ethdev_driver.h>
 
 const char usage_info[] = "usage: dpdk-devname\n";
-
 /* Initialization of Environment Abstraction Layer (EAL). 8< */
 int main(int argc, char **argv)
 {
@@ -47,7 +46,7 @@ int main(int argc, char **argv)
         if (ret < 0)
         {
             fprintf(stderr,
-                    "No name info returned for port  %i, err: %s\n",
+                    "No name info returned for port %i, err: %s\n",
                     portid, rte_strerror(ret));
             continue;
         }
@@ -60,12 +59,12 @@ int main(int argc, char **argv)
             memset(&device_owner, 0, sizeof(struct rte_eth_dev_owner));
         }
 
-        printf("Port %i\n"
-               "  driver: %s \n"
-               "  eth_dev_info_name: %s\n"
-               "  get_name_by_port_name: %s\n"
-               "  owner_id: 0x%016lx\n"
-               "  owner_name: %s\n",
+        fprintf(stdout, "dpdk-devname found port:%i "
+               "driver:%s "
+               "eth_dev_info_name:%s "
+               "get_name_by_port_name:%s "
+               "owner_id:0x%016lx "
+               "owner_name:%s\n",
                portid,
                device_info.driver_name,
                device_info.device->name,
