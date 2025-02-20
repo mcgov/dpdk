@@ -214,16 +214,16 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 			sizeof(struct rte_ether_hdr) +
 			sizeof(struct rte_ipv4_hdr));
 	if (txonly_multi_flow) {
-		uint16_t src_var = RTE_PER_LCORE(_src_port_var);
 		struct rte_udp_hdr *udp_hdr;
-		uint16_t src_port;
 
 		udp_hdr = rte_pktmbuf_mtod_offset(pkt,
 				struct rte_udp_hdr *,
 				sizeof(struct rte_ether_hdr) +
 				sizeof(struct rte_ipv4_hdr));
-		/*
-		 * Generate multiple flows by varying UDP source port.
+
+
+                /*
+		 * Generate multiple flows by varying UDP ports.
 		 * This enables packets are well distributed by RSS in
 		 * receiver side if any and txonly mode can be a decent
 		 * packet generator for developer's quick performance
@@ -234,10 +234,12 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 		 * the lcore ID. As such, the most significant byte will cycle
 		 * through 0xC0 and 0xFF.
 		 */
-		src_port = ((src_var++ | 0xC0) << 8) + rte_lcore_id();
-		udp_hdr->src_port = rte_cpu_to_be_16(src_port);
-		RTE_PER_LCORE(_src_port_var) = src_var;
-	}
+		udp_hdr->src_port = (rte_lcore_id() <<8) | rte_lcore_id();
+		udp_hdr->dst_port = (rte_lcore_id() << 8) | rte_lcore_id();
+		udp_hdr->src_port = rte_cpu_to_be_16(udp_hdr->src_port);
+		udp_hdr->dst_port = rte_cpu_to_be_16(udp_hdr->dst_port);
+		
+        }
 
 	if (unlikely(tx_pkt_split == TX_PKT_SPLIT_RND) || txonly_multi_flow)
 		update_pkt_header(pkt, pkt_len);
