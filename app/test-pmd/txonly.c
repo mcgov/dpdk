@@ -234,8 +234,8 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 		 * the lcore ID. As such, the most significant byte will cycle
 		 * through 0xC0 and 0xFF.
 		 */
-		udp_hdr->src_port = (rte_lcore_id() <<8) | rte_lcore_id();
-		udp_hdr->dst_port = (rte_lcore_id() << 8) | rte_lcore_id();
+		udp_hdr->src_port = ((rte_lcore_id() | 0xC0) << 8) + rte_lcore_id();
+		udp_hdr->dst_port = udp_hdr->src_port + idx;
 		udp_hdr->src_port = rte_cpu_to_be_16(udp_hdr->src_port);
 		udp_hdr->dst_port = rte_cpu_to_be_16(udp_hdr->dst_port);
 		
