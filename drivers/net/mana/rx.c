@@ -353,14 +353,12 @@ mana_start_rx_queues(struct rte_eth_dev *dev)
 			qp_attr_ex.rx_hash_conf.rx_hash_fields_mask |=
 				IBV_RX_HASH_SRC_IPV6 | IBV_RX_HASH_SRC_IPV6;
 
-		if (priv->rss_conf.rss_hf &
-		    (RTE_ETH_RSS_NONFRAG_IPV4_TCP | RTE_ETH_RSS_NONFRAG_IPV6_TCP))
+		if (priv->rss_conf.rss_hf & RTE_ETH_RSS_TCP)
 			qp_attr_ex.rx_hash_conf.rx_hash_fields_mask |=
 				IBV_RX_HASH_SRC_PORT_TCP |
 				IBV_RX_HASH_DST_PORT_TCP;
 
-		if (priv->rss_conf.rss_hf &
-		    (RTE_ETH_RSS_NONFRAG_IPV4_UDP | RTE_ETH_RSS_NONFRAG_IPV6_UDP))
+		if (priv->rss_conf.rss_hf & RTE_ETH_RSS_UDP)
 			qp_attr_ex.rx_hash_conf.rx_hash_fields_mask |=
 				IBV_RX_HASH_SRC_PORT_UDP |
 				IBV_RX_HASH_DST_PORT_UDP;
