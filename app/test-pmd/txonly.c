@@ -214,9 +214,7 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 			sizeof(struct rte_ether_hdr) +
 			sizeof(struct rte_ipv4_hdr));
 	if (txonly_multi_flow) {
-		uint16_t src_var = RTE_PER_LCORE(_src_port_var);
 		struct rte_udp_hdr *udp_hdr;
-		uint16_t src_port;
 
 		udp_hdr = rte_pktmbuf_mtod_offset(pkt,
 				struct rte_udp_hdr *,
@@ -230,14 +228,16 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 		 * regression test.
 		 *
 		 * Only ports in the range 49152 (0xC000) and 65535 (0xFFFF)
-		 * will be used, with the least significant byte representing
-		 * the lcore ID. As such, the most significant byte will cycle
-		 * through 0xC0 and 0xFF.
+		 * will be used, with both bytes representing the core id.
+		 * 
+		 * These bytes are OR'd with the original source port 
+		 * somewhat respect the --tx-udp flag which would set this
+		 * value to an arbitrary default. 
 		 */
-		src_port = ((src_var++ | 0xC0) << 8) + rte_lcore_id();
-		udp_hdr->src_port = rte_cpu_to_be_16(src_port);
-		RTE_PER_LCORE(_src_port_var) = src_var;
-	}
+		udp_hdr->src_port = rte_cpu_to_be_16(
+							0xC000 | (rte_lcore_id() << 8) 
+							| rte_lcore_id() | udp_hdr->src_port);
+        }
 
 	if (unlikely(tx_pkt_split == TX_PKT_SPLIT_RND) || txonly_multi_flow)
 		update_pkt_header(pkt, pkt_len);
