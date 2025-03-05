@@ -233,7 +233,7 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 		 */
 		udp_port = 0xC000 | (idx << 8) | rte_lcore_id();
 		udp_hdr->src_port = rte_cpu_to_be_16(udp_port);
-		udp_hdr->dst_port = rte_cpu_to_be_16(udp_port);
+		//udp_hdr->dst_port = rte_cpu_to_be_16(udp_port);
     }
 
 	if (unlikely(tx_pkt_split == TX_PKT_SPLIT_RND) || txonly_multi_flow)
