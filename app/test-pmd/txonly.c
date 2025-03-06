@@ -56,7 +56,6 @@ uint32_t tx_ip_dst_addr = (198U << 24) | (18 << 16) | (0 << 8) | 2;
 #define IP_DEFTTL  64   /* from RFC 1340. */
 
 static struct rte_ipv4_hdr pkt_ip_hdr; /**< IP header of transmitted packets. */
-RTE_DEFINE_PER_LCORE(uint8_t, _src_port_var); /**< Source port variation */
 static struct rte_udp_hdr pkt_udp_hdr; /**< UDP header of tx packets. */
 
 static uint64_t timestamp_mask; /**< Timestamp dynamic flag mask */
@@ -214,10 +213,7 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 			sizeof(struct rte_ether_hdr) +
 			sizeof(struct rte_ipv4_hdr));
 	if (txonly_multi_flow) {
-		uint16_t src_var = RTE_PER_LCORE(_src_port_var);
 		struct rte_udp_hdr *udp_hdr;
-		uint16_t src_port;
-
 		udp_hdr = rte_pktmbuf_mtod_offset(pkt,
 				struct rte_udp_hdr *,
 				sizeof(struct rte_ether_hdr) +
@@ -234,9 +230,8 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 		 * the lcore ID. As such, the most significant byte will cycle
 		 * through 0xC0 and 0xFF.
 		 */
-		src_port = ((src_var++ | 0xC0) << 8) + rte_lcore_id();
-		udp_hdr->src_port = rte_cpu_to_be_16(src_port);
-		RTE_PER_LCORE(_src_port_var) = src_var;
+		
+		udp_hdr->src_port = rte_cpu_to_be_16(idx);
 	}
 
 	if (unlikely(tx_pkt_split == TX_PKT_SPLIT_RND) || txonly_multi_flow)
@@ -377,9 +372,6 @@ pkt_burst_transmit(struct fwd_stream *fs)
 		return false;
 
 	nb_tx = common_fwd_stream_transmit(fs, pkts_burst, nb_pkt);
-
-	if (txonly_multi_flow)
-		RTE_PER_LCORE(_src_port_var) -= nb_pkt - nb_tx;
 
 	if (unlikely(nb_tx < nb_pkt)) {
 		if (verbose_level > 0 && fs->fwd_dropped == 0)
