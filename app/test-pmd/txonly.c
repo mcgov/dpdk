@@ -214,7 +214,6 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 			sizeof(struct rte_ipv4_hdr));
 	if (txonly_multi_flow) {
 		struct rte_udp_hdr *udp_hdr;
-		uint16_t udp_port;
 		udp_hdr = rte_pktmbuf_mtod_offset(pkt,
 				struct rte_udp_hdr *,
 				sizeof(struct rte_ether_hdr) +
@@ -226,14 +225,12 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 		 * packet generator for developer's quick performance
 		 * regression test.
 		 *
-		 * Only ports in the range 49152 (0xC000) and 65535 (0xFFFF)
-		 * will be used, with the least significant byte representing
-		 * the lcore ID. As such, the most significant byte will cycle
-		 * through 0xC0 and 0xFF.
+		 * To avoid a global read+increment+write,
+		 * this reuses idx for the src_port.
+		 * It happens to be a convenient variable with enough entropy.
+		 * Bit 10 is set to ensure the port is >= 1023.
 		 */
-		udp_port = idx; //) | rte_lcore_id();
-		udp_hdr->src_port = rte_cpu_to_be_16(udp_port);
-		//udp_hdr->dst_port = rte_cpu_to_be_16(udp_port);
+		udp_hdr->src_port = rte_cpu_to_be_16(idx | 0x400);
     }
 
 	if (unlikely(tx_pkt_split == TX_PKT_SPLIT_RND) || txonly_multi_flow)
