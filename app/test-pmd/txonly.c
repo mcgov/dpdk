@@ -22,7 +22,6 @@
 #include <rte_memcpy.h>
 #include <rte_launch.h>
 #include <rte_eal.h>
-#include <rte_per_lcore.h>
 #include <rte_lcore.h>
 #include <rte_branch_prediction.h>
 #include <rte_mempool.h>
@@ -224,11 +223,6 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 		 * receiver side if any and txonly mode can be a decent
 		 * packet generator for developer's quick performance
 		 * regression test.
-		 *
-		 * Only ports in the range 49152 (0xC000) and 65535 (0xFFFF)
-		 * will be used, with the least significant byte representing
-		 * the lcore ID. As such, the most significant byte will cycle
-		 * through 0xC0 and 0xFF.
 		 */
 		
 		udp_hdr->src_port = rte_cpu_to_be_16(idx);
