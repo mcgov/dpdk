@@ -214,10 +214,8 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 			sizeof(struct rte_ether_hdr) +
 			sizeof(struct rte_ipv4_hdr));
 	if (txonly_multi_flow) {
-		uint16_t src_var = RTE_PER_LCORE(_src_port_var);
 		struct rte_udp_hdr *udp_hdr;
 		uint16_t src_port;
-
 		udp_hdr = rte_pktmbuf_mtod_offset(pkt,
 				struct rte_udp_hdr *,
 				sizeof(struct rte_ether_hdr) +
@@ -234,9 +232,8 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 		 * the lcore ID. As such, the most significant byte will cycle
 		 * through 0xC0 and 0xFF.
 		 */
-		src_port = ((src_var++ | 0xC0) << 8) + rte_lcore_id();
+		src_port = (0xC0 << 8 |  idx ) + rte_lcore_id(); // corresponds to nb_pkts
 		udp_hdr->src_port = rte_cpu_to_be_16(src_port);
-		RTE_PER_LCORE(_src_port_var) = src_var;
 	}
 
 	if (unlikely(tx_pkt_split == TX_PKT_SPLIT_RND) || txonly_multi_flow)
