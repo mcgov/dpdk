@@ -228,14 +228,12 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 		 * receiver side if any and txonly mode can be a decent
 		 * packet generator for developer's quick performance
 		 * regression test.
-		 *
-		 * Only ports in the range 49152 (0xC000) and 65535 (0xFFFF)
-		 * will be used, with the least significant byte representing
-		 * the lcore ID. As such, the most significant byte will cycle
-		 * through 0xC0 and 0xFF.
 		 */
-		src_port = ((0xC0 | fs->tx_queue)<< 8) + (src_var++ & 0xFF);
+		src_port = ((0xC0 | fs->tx_queue)<< 8) | src_var++;
 		udp_hdr->src_port = rte_cpu_to_be_16(src_port);
+		if (src_port % 0x400){
+			printf("port: %d\n", src_port);
+		}
 		//RTE_PER_LCORE(_src_port_var) = src_var;
 	}
 
@@ -378,10 +376,9 @@ pkt_burst_transmit(struct fwd_stream *fs)
 
 	nb_tx = common_fwd_stream_transmit(fs, pkts_burst, nb_pkt);
 
-	// if (txonly_multi_flow) {
-	// 	// RTE_PER_LCORE(_src_port_var) += nb_pkt ;
-	// 	printf("src_port_var: %x nb_pkt: %x nb_tx: %x\n", RTE_PER_LCORE(_src_port_var), nb_pkt, nb_tx);
-	// }
+	if (txonly_multi_flow) {
+		RTE_PER_LCORE(_src_port_var) -= nb_pkt - nb_tx;
+	}
 
 	if (unlikely(nb_tx < nb_pkt)) {
 		if (verbose_level > 0 && fs->fwd_dropped == 0)
