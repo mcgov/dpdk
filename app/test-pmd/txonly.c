@@ -214,7 +214,6 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 			sizeof(struct rte_ether_hdr) +
 			sizeof(struct rte_ipv4_hdr));
 	if (txonly_multi_flow) {
-		uint16_t src_var = RTE_PER_LCORE(_src_port_var);
 		struct rte_udp_hdr *udp_hdr;
 		uint16_t src_port;
 
@@ -229,11 +228,8 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 		 * packet generator for developer's quick performance
 		 * regression test.
 		 */
-		src_port = ((0xC0 | fs->tx_queue)<< 8) | src_var++;
+		src_port = ((0xC0 | fs->tx_queue)<< 8) | RTE_PER_LCORE(_src_port_var)++;
 		udp_hdr->src_port = rte_cpu_to_be_16(src_port);
-		if (src_port % 0x400){
-			printf("port: %d\n", src_port);
-		}
 		//RTE_PER_LCORE(_src_port_var) = src_var;
 	}
 
