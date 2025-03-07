@@ -234,9 +234,8 @@ pkt_burst_prepare(struct rte_mbuf *pkt, struct rte_mempool *mbp,
 		 * the lcore ID. As such, the most significant byte will cycle
 		 * through 0xC0 and 0xFF.
 		 */
-		src_port = ((0xC0 | fs->tx_port)<< 8) | src_var;
+		src_port = ((0xC0 | src_var)<< 8) | fs->tx_port;
 		udp_hdr->src_port = rte_cpu_to_be_16(src_port);
-		RTE_PER_LCORE(_src_port_var) = src_var;
 	}
 
 	if (unlikely(tx_pkt_split == TX_PKT_SPLIT_RND) || txonly_multi_flow)
@@ -379,7 +378,7 @@ pkt_burst_transmit(struct fwd_stream *fs)
 	nb_tx = common_fwd_stream_transmit(fs, pkts_burst, nb_pkt);
 
 	if (txonly_multi_flow)
-		RTE_PER_LCORE(_src_port_var) -= nb_pkt - nb_tx;
+		RTE_PER_LCORE(_src_port_var) -= nb_pkt + nb_tx;
 
 	if (unlikely(nb_tx < nb_pkt)) {
 		if (verbose_level > 0 && fs->fwd_dropped == 0)
