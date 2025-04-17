@@ -505,7 +505,7 @@ int hn_vf_stop(struct rte_eth_dev *dev)
 
 	rte_rwlock_read_lock(&hv->vf_lock);
 	vf_dev = hn_get_vf_dev(hv);
-	if (vf_dev) {
+	if (vf_dev && vf_dev->data) {
 		ret = rte_eth_dev_stop(vf_dev->data->port_id);
 		if (ret != 0)
 			PMD_DRV_LOG(ERR, "Failed to stop device on port %u",
