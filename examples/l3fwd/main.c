@@ -48,6 +48,7 @@
 #include "l3fwd.h"
 #include "l3fwd_event.h"
 #include "l3fwd_route.h"
+#include "rte_ethdev.h"
 
 #define MAX_TX_QUEUE_PER_PORT RTE_MAX_LCORE
 #define MAX_RX_QUEUE_PER_PORT 128
@@ -464,6 +465,72 @@ print_usage(const char *prgname)
 		ACL_LEAD_CHAR, ROUTE_LEAD_CHAR, alg);
 }
 
+static void
+l3fwd_port_stats_display(uint16_t portid)
+{
+	struct rte_eth_stats stats;
+	int num_xstats;
+	struct rte_eth_xstat *xstats;
+	struct rte_eth_xstat_name *xstats_names;
+	int ret;
+	ret = rte_eth_stats_get(portid, &stats);
+	if (ret != 0) {
+		printf("Failed to get stats for port %u\n", portid);
+		return;
+	}
+	
+	printf("Port %hu (In)  pkts: %lu bytes: %lu missed %lu errors %lu\n",
+		portid, stats.ipackets, stats.ibytes, stats.imissed, stats.ierrors);
+	printf("        (Out) pkts %lu bytes: %lu nombuf %lu errors: %lu\n",
+			stats.opackets,stats.obytes,stats.rx_nombuf, stats.oerrors);
+	for (int i = 0; i < RTE_ETHDEV_QUEUE_STAT_CNTRS; i++){
+		printf("    Queue %d  in: %lu out: %lu, error: %lu\n", 
+			i, stats.q_ipackets[i], stats.q_opackets[i], stats.q_errors[i]);
+	}
+
+
+	/* Get the number of xstats available */
+	num_xstats = rte_eth_xstats_get(portid, NULL, 0);
+	if (num_xstats > 0) {
+
+		/* Allocate memory for xstats and their names */
+		xstats = rte_malloc("xstats", num_xstats * sizeof(struct rte_eth_xstat), 0);
+		xstats_names = rte_malloc("xstats_names", num_xstats * sizeof(struct rte_eth_xstat_name), 0);
+
+		if (xstats == NULL || xstats_names == NULL) {
+			printf("Error: Cannot allocate memory for xstats on port %u\n", portid);
+			rte_free(xstats);
+			rte_free(xstats_names);
+			return;
+		}
+
+		/* Retrieve xstats names */
+		if (rte_eth_xstats_get_names(portid, xstats_names, num_xstats) != num_xstats) {
+			printf("Error: Cannot get xstats names for port %u\n", portid);
+			rte_free(xstats);
+			rte_free(xstats_names);
+			return;
+		}
+
+		/* Retrieve xstats values */
+		if (rte_eth_xstats_get(portid, xstats, num_xstats) != num_xstats) {
+			printf("Error: Cannot get xstats for port %u\n", portid);
+			rte_free(xstats);
+			rte_free(xstats_names);
+			return;
+		}
+
+		/* Print xstats */
+		printf("Extended statistics for port %u:\n", portid);
+		for (int i = 0; i < num_xstats; i++) {
+			printf("    %s: %" PRIu64 "\n", xstats_names[i].name, xstats[i].value);
+		}
+
+		/* Free allocated memory */
+		rte_free(xstats);
+		rte_free(xstats_names);
+	}
+}
 static int
 parse_max_pkt_len(const char *pktlen)
 {
@@ -1749,6 +1816,7 @@ main(int argc, char **argv)
 		}
 
 		rte_eal_mp_wait_lcore();
+		
 		RTE_ETH_FOREACH_DEV(portid) {
 			if ((enabled_port_mask & (1 << portid)) == 0)
 				continue;
@@ -1762,7 +1830,12 @@ main(int argc, char **argv)
 #endif
 	{
 		rte_eal_mp_wait_lcore();
-
+		
+		// Display port stats
+		l3fwd_port_stats_display(portid);
+		
+		
+		// Close ports
 		RTE_ETH_FOREACH_DEV(portid) {
 			if ((enabled_port_mask & (1 << portid)) == 0)
 				continue;
