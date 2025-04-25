@@ -522,7 +522,9 @@ l3fwd_port_stats_display(uint16_t portid)
 		/* Print xstats */
 		printf("Extended statistics for port %u:\n", portid);
 		for (int i = 0; i < num_xstats; i++) {
-			printf("    %s: %" PRIu64 "\n", xstats_names[i].name, xstats[i].value);
+			if (xstats[i].value) {
+				printf("    %s: %lu\n", xstats_names[i].name, xstats[i].value);
+			}
 		}
 
 		/* Free allocated memory */
