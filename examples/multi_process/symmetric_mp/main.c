@@ -52,6 +52,7 @@
 
 #define PARAM_PROC_ID "proc-id"
 #define PARAM_NUM_PROCS "num-procs"
+#define PARAM_NO_PROMISCUOUS "ignore-promiscuous"
 
 /* for each lcore, record the elements of the ports array to use */
 struct lcore_ports{
@@ -69,6 +70,9 @@ struct __rte_aligned(RTE_CACHE_LINE_SIZE / 2) port_stats{
 
 static int proc_id = -1;
 static unsigned num_procs = 0;
+
+/* default to assert if promiscuous mode enable fails*/
+static int ignore_promisc = 1;
 
 static uint16_t ports[RTE_MAX_ETHPORTS];
 static unsigned num_ports = 0;
@@ -119,6 +123,7 @@ smp_parse_args(int argc, char **argv)
 	static struct option lgopts[] = {
 			{PARAM_NUM_PROCS, 1, 0, 0},
 			{PARAM_PROC_ID, 1, 0, 0},
+			{PARAM_NO_PROMISCUOUS,0, &ignore_promisc, 0},
 			{NULL, 0, 0, 0}
 	};
 
@@ -274,9 +279,12 @@ smp_port_init(uint16_t port, struct rte_mempool *mbuf_pool,
 	}
 
 	retval = rte_eth_promiscuous_enable(port);
-	if (retval != 0)
+	if (retval != 0) {
 		printf("Error during enabling promiscuous mode for port %u: %s - ignore\n",
 			port, rte_strerror(-retval));
+			if (!ignore_promisc)
+				exit(retval);
+	}
 
 	retval  = rte_eth_dev_start(port);
 	if (retval < 0)
