@@ -1834,8 +1834,9 @@ main(int argc, char **argv)
 		rte_eal_mp_wait_lcore();
 		
 		// Display port stats
-		l3fwd_port_stats_display(portid);
-		
+		RTE_ETH_FOREACH_DEV(portid) {
+			l3fwd_port_stats_display(portid);
+		}
 		
 		// Close ports
 		RTE_ETH_FOREACH_DEV(portid) {
