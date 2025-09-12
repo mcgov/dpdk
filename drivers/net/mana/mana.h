@@ -571,5 +571,5 @@ void mana_free_verbs_buf(void *ptr, void *data __rte_unused);
 int mana_rx_intr_enable(struct rte_eth_dev *dev, uint16_t rx_queue_id);
 int mana_rx_intr_disable(struct rte_eth_dev *dev, uint16_t rx_queue_id);
 int mana_fd_set_non_blocking(int fd);
-
+int mana_promiscuous_enable(struct rte_eth_dev *dev);
 #endif

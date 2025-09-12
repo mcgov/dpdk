@@ -826,6 +826,7 @@ static const struct eth_dev_ops mana_dev_ops = {
 	.stats_get		= mana_dev_stats_get,
 	.stats_reset		= mana_dev_stats_reset,
 	.mtu_set		= mana_mtu_set,
+	.promiscuous_enable = mana_promiscuous_enable,
 };
 
 static const struct eth_dev_ops mana_dev_secondary_ops = {
@@ -833,6 +834,11 @@ static const struct eth_dev_ops mana_dev_secondary_ops = {
 	.stats_reset = mana_dev_stats_reset,
 	.dev_infos_get = mana_dev_info_get,
 };
+
+int mana_promiscuous_enable(struct rte_eth_dev *dev) {
+	DRV_LOG(DEBUG, "ignoring promiscuous_enable.");
+	return 0;
+}
 
 uint16_t
 mana_rx_burst_removed(void *dpdk_rxq __rte_unused,
