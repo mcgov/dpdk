@@ -60,6 +60,7 @@ static struct netvsc_local_data {
 #define NETVSC_MP_NAME "net_netvsc_mp"
 #define NETVSC_MP_REQ_TIMEOUT_SEC 5
 
+
 struct netvsc_mp_param {
 	enum netvsc_mp_req_type type;
 	int port_id;
@@ -676,7 +677,6 @@ free_hotadd_ctx:
 	rte_spinlock_lock(&hv->hotadd_lock);
 	LIST_REMOVE(hot_ctx, list);
 	rte_spinlock_unlock(&hv->hotadd_lock);
-
 	rte_free(hot_ctx);
 }
 
@@ -723,7 +723,9 @@ netvsc_hotadd_callback(const char *device_name, enum rte_dev_event_type type,
 			rte_spinlock_lock(&hv->hotadd_lock);
 			LIST_INSERT_HEAD(&hv->hotadd_list, hot_ctx, list);
 			rte_spinlock_unlock(&hv->hotadd_lock);
-			rte_eal_alarm_set(1000000, netvsc_hotplug_retry, hot_ctx);
+			if (ret=rte_eal_alarm_set(1000000, netvsc_hotplug_retry, hot_ctx)){
+				PMD_DRV_LOG(ERR, "could not schedule hotadd callback, ret=%d",ret);
+			}
 			return;
 		}
 
@@ -1090,7 +1092,13 @@ hn_dev_close(struct rte_eth_dev *dev)
 	rte_spinlock_lock(&hv->hotadd_lock);
 	while (!LIST_EMPTY(&hv->hotadd_list)) {
 		hot_ctx = LIST_FIRST(&hv->hotadd_list);
-		rte_eal_alarm_cancel(netvsc_hotplug_retry, hot_ctx);
+		do
+		{
+			ret = rte_eal_alarm_cancel(netvsc_hotplug_retry, hot_ctx);
+			if (unlikely(ret > 1))
+				PMD_DRV_LOG(DEBUG, "hn_dev_close canceled %d entries "
+									"for hotplug context at %p.", ret, hot_ctx);
+		} while (ret >= 0 && rte_errno == EINPROGRESS);
 		LIST_REMOVE(hot_ctx, list);
 		rte_free(hot_ctx);
 	}

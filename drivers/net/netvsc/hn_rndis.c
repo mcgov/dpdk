@@ -1143,8 +1143,14 @@ void
 hn_rndis_detach(struct hn_data *hv)
 {
 	struct rte_eth_dev *dev = &rte_eth_devices[hv->port_id];
+	int ret;
 
-	rte_eal_alarm_cancel(hn_rndis_link_alarm, dev);
+	do {
+		ret = rte_eal_alarm_cancel(hn_rndis_link_alarm, dev);
+	} while (ret >= 0 && rte_errno == EINPROGRESS);
+
+	if (ret < 0)
+		PMD_DRV_LOG(ERR, "netvsc rndis detatch alarm cancel failed. ret=%d", ret);
 
 	/* Halt the RNDIS. */
 	hn_rndis_halt(hv);

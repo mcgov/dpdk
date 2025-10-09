@@ -558,7 +558,10 @@ int hn_vf_close(struct rte_eth_dev *dev)
 						RTE_ETH_EVENT_INTR_RMV,
 						hn_eth_rmv_event_callback,
 						hv);
-		rte_eal_alarm_cancel(hn_remove_delayed, hv);
+		do {
+			ret = rte_eal_alarm_cancel(hn_remove_delayed, hv);
+		} while (ret >= 0 && rte_errno == EINPROGRESS);
+
 		ret = rte_eth_dev_close(hv->vf_ctx.vf_port);
 		hv->vf_ctx.vf_attached = false;
 	}
