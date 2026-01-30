@@ -1615,7 +1615,7 @@ mana_pci_remove(struct rte_pci_device *pci_dev)
 		if (!rte_spinlock_trylock(&mana_shared_data_lock)) {
 			continue;
 		}
-		if (rte_eal_process_type() == RTE_PROC_PRIMARY && !mana_shared_data->secondary_cnt) {
+		if (rte_eal_process_type() == RTE_PROC_PRIMARY && mana_shared_data->secondary_cnt) {
 			RTE_VERIFY(mana_local_data.primary_cnt > 0);
 			RTE_VERIFY(mana_shared_data->secondary_cnt == 0);
 			mana_local_data.primary_cnt--;
