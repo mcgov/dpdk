@@ -1611,37 +1611,43 @@ mana_dev_uninit(struct rte_eth_dev *dev)
 static int
 mana_pci_remove(struct rte_pci_device *pci_dev)
 {
-	rte_spinlock_lock(&mana_shared_data_lock);
-	if (rte_eal_process_type() == RTE_PROC_PRIMARY) {
-		RTE_VERIFY(mana_local_data.primary_cnt > 0);
-		RTE_VERIFY(mana_shared_data->secondary_cnt == 0);
-		mana_local_data.primary_cnt--;
-		
-		if (!mana_local_data.primary_cnt) {
-			DRV_LOG(DEBUG, "mp uninit primary");
-			mana_mp_uninit_primary();
-
-			/* Also free the shared memory if this is the last */
-			DRV_LOG(DEBUG, "free shared memezone data");
-			rte_memzone_free(mana_shared_mz);
-			mana_shared_mz = NULL;
-			mana_shared_data = NULL;
+	while (true) {
+		if (!rte_spinlock_trylock(&mana_shared_data_lock)) {
+			continue;
 		}
-	} else {
-		RTE_VERIFY(rte_atomic_load_explicit(&mana_shared_data->secondary_cnt,
-						    rte_memory_order_relaxed) > 0);
-		rte_atomic_fetch_sub_explicit(&mana_shared_data->secondary_cnt, 1,
-					      rte_memory_order_relaxed);
+		if (rte_eal_process_type() == RTE_PROC_PRIMARY && !mana_shared_data->secondary_cnt) {
+			RTE_VERIFY(mana_local_data.primary_cnt > 0);
+			RTE_VERIFY(mana_shared_data->secondary_cnt == 0);
+			mana_local_data.primary_cnt--;
+			
+			if (!mana_local_data.primary_cnt) {
+				DRV_LOG(DEBUG, "mp uninit primary");
+				mana_mp_uninit_primary();
 
-		RTE_VERIFY(mana_local_data.secondary_cnt > 0);
-		mana_local_data.secondary_cnt--;
-		if (!mana_local_data.secondary_cnt) {
-			DRV_LOG(DEBUG, "mp uninit secondary");
-			mana_mp_uninit_secondary();
-			mana_shared_data = NULL;
+				/* Also free the shared memory if this is the last */
+				DRV_LOG(DEBUG, "free shared memezone data");
+				rte_memzone_free(mana_shared_mz);
+				mana_shared_mz = NULL;
+				mana_shared_data = NULL;
+				break;
+			}
+		} else {
+			RTE_VERIFY(rte_atomic_load_explicit(&mana_shared_data->secondary_cnt,
+								rte_memory_order_relaxed) > 0);
+			rte_atomic_fetch_sub_explicit(&mana_shared_data->secondary_cnt, 1,
+							rte_memory_order_relaxed);
+
+			RTE_VERIFY(mana_local_data.secondary_cnt > 0);
+			mana_local_data.secondary_cnt--;
+			if (!mana_local_data.secondary_cnt) {
+				DRV_LOG(DEBUG, "mp uninit secondary");
+				mana_mp_uninit_secondary();
+				mana_shared_data = NULL;
+				break;
+			}
 		}
 	}
-	rte_spinlock_unlock(&mana_shared_data_lock);
+		rte_spinlock_unlock(&mana_shared_data_lock);
 
 	return rte_eth_dev_pci_generic_remove(pci_dev, mana_dev_uninit);
 }
