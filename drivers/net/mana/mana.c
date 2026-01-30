@@ -1614,8 +1614,9 @@ mana_pci_remove(struct rte_pci_device *pci_dev)
 	rte_spinlock_lock(&mana_shared_data_lock);
 	if (rte_eal_process_type() == RTE_PROC_PRIMARY) {
 		RTE_VERIFY(mana_local_data.primary_cnt > 0);
+		RTE_VERIFY(mana_shared_data->secondary_cnt == 0);
 		mana_local_data.primary_cnt--;
-
+		
 		if (!mana_local_data.primary_cnt) {
 			DRV_LOG(DEBUG, "mp uninit primary");
 			mana_mp_uninit_primary();
